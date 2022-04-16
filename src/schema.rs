@@ -1,25 +1,25 @@
 table! {
     Aliases (alias) {
-        alias -> Nullable<Text>,
-        filepath -> Nullable<Text>,
+        alias -> Text,
+        filepath -> Text,
     }
 }
 
 table! {
     Files (filepath) {
-        filepath -> Nullable<Text>,
-        title -> Nullable<Text>,
-        atime -> Nullable<Integer>,
-        mtime -> Nullable<Integer>,
+        filepath -> Text,
+        title -> Text,
+        atime -> Integer,
+        mtime -> Integer,
     }
 }
 
 table! {
     Links (id) {
         id -> Integer,
-        source -> Nullable<Text>,
-        destination -> Nullable<Text>,
-        linktype -> Nullable<Text>,
+        source -> Text,
+        destination -> Text,
+        linktype -> Text,
     }
 }
 
