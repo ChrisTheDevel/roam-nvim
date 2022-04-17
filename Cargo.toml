@@ -7,6 +7,9 @@ edition = "2021"
 
 [dependencies]
 chrono = "0.4"
-diesel = { version = "1.4.4", features = ["sqlite"] }
 dotenv = "0.15.0"
+# diesel crates
+diesel = { version = "1.4.4", features = ["sqlite"] }
 diesel_migrations = "1.4.0"
+# gives us the paths to several standardized paths
+dirs = "4.0.0"

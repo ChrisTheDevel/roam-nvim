@@ -13,4 +13,3 @@ pub fn title_to_path(title: &str) -> PathBuf {
     }).collect();
     format!("{}-{}.md", timestamp, formated_title).into()
 }
-
