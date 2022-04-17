@@ -1,3 +1,6 @@
+//! this module contains the schema definitions. These make compile time validations interactions
+//! with the sqlite database possible.
+
 table! {
     Aliases (alias) {
         alias -> Text,

@@ -1,16 +1,9 @@
-mod schema;
-use std::path::PathBuf;
-use chrono::offset::Utc;
+//! This crate is the backend for the [rs-core nvim plugin]: https://github.com/ChrisTheDevel/rs-core
 
-/// creates an unique file_path with a timestamp and with the title
-pub fn title_to_path(title: &str) -> PathBuf {
-    let timestamp = Utc::now().format("%Y%m%d%%H%M%S");
-    let formated_title: String = title.to_lowercase().chars().map(|chr| {
-        match chr {
-            c if c.is_whitespace() => '_',
-            '-' => '_',
-            _ => chr,
-        }
-    }).collect();
-    format!("{timestamp}-{formated_title}.md").into()
-}
+#![warn(missing_debug_implementations, missing_docs)]
+
+#[macro_use]
+extern crate diesel;
+
+mod schema;
+mod utils;
