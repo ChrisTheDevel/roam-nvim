@@ -1,11 +1,16 @@
 mod schema;
+use std::path::PathBuf;
+use chrono::offset::Utc;
 
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        let result = 2 + 2;
-        assert_eq!(result, 4);
-    }
+/// creates an unique file_path with a timestamp and with the title
+pub fn title_to_path(title: &str) -> PathBuf {
+    let timestamp = Utc::now().format("%Y%m%d%%H%M%S");
+    let formated_title: String = title.to_lowercase().chars().map(|chr| {
+        match chr {
+            c if c.is_whitespace() => '_',
+            '-' => '_',
+            _ => chr,
+        }
+    }).collect();
+    format!("{timestamp}-{formated_title}.md").into()
 }

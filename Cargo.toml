@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 diesel = { version = "1.4.4", features = ["sqlite"] }
 dotenv = "0.15.0"
+chrono = "0.4"
