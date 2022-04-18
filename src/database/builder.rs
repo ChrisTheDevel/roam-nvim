@@ -3,7 +3,7 @@ use std::path::PathBuf;
 // external crate imports
 use diesel::prelude::*;
 // interal crate imports
-use crate::database::DatabaseWrapper;
+use super::DatabaseWrapper;
 
 /// A builder struct for DatabaseWrapper
 pub struct DatabaseWrapperBuilder {
@@ -68,7 +68,7 @@ impl DatabaseWrapperBuilder {
 
 #[derive(Clone, Debug)]
 /// An error type for the DatabaseWrapperBuilder
-struct DatabaseBuilderError {
+pub struct DatabaseBuilderError {
     message: String,
 }
 
@@ -79,7 +79,7 @@ impl std::fmt::Display for DatabaseBuilderError {
 }
 
 #[cfg(test)]
-mod DatabaseTests {
+mod DatabaseBuilderTests {
     use super::*;
     use std::path::Path;
 
@@ -135,38 +135,5 @@ mod DatabaseTests {
         // connection/creation of dirs
         assert!(database_wrapper.is_ok());
         delete_db(&test_temp_dir);
-    }
-
-    #[test]
-    /// we want to test that the migrations are done correctly
-    fn test_migrations() {
-        let test_temp_dir = std::env::temp_dir().join("test_migrations");
-        let db_wrapper: DatabaseWrapper = DatabaseWrapperBuilder::new()
-            .cache_path(test_temp_dir.clone())
-            .database_name("test_migrations.db".into())
-            .build()
-            .expect("could not create db wrapper");
-        assert!(db_wrapper.init_schema().is_ok());
-        delete_db(&test_temp_dir)
-    }
-
-    #[test]
-    /// we want to test that the migrations are done correctly when run multiple times
-    fn test_multiple_migrations() {
-        let test_temp_dir = std::env::temp_dir().join("test_multiple_migrations");
-
-        let builder = DatabaseWrapperBuilder::new()
-            .cache_path(test_temp_dir.clone())
-            .database_name("test_multiple_migrations.db".into());
-        {
-            let db_wrapper: DatabaseWrapper = builder.build().expect("could not create db wrapper");
-            assert!(db_wrapper.init_schema().is_ok());
-            assert!(db_wrapper.init_schema().is_ok());
-        }
-        // the migrations should be ok to 
-        let db_wrapper: DatabaseWrapper = builder.build().expect("could not create db wrapper");
-        assert!(db_wrapper.init_schema().is_ok());
-        assert!(db_wrapper.init_schema().is_ok());
-        delete_db(&test_temp_dir)
     }
 }
