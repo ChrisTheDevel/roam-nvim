@@ -1,11 +1,7 @@
-# rs-core development notes
-
-# Why rust
-The use of rust for this plugin is probably overkill and might even be less performant than a fully lua based plugin. I'm writing this in rust + lua (and that one required vimscript file) for my own sake since I want to get more comfy with the language.
+# roam-nvim development notes
 
 # Design
-lua frontend that handles keybinds, calling of rust functions, hiding away yaml metadata in markdown buffers.
-
+lua frontend that exposes rust functions.
 rust backend that handles interaction with sqlite cache
 
 ## Communication between ends
@@ -26,7 +22,8 @@ All interactions with the database will be through some handle provided by the d
 - [ ] implement function that returns all links of document
 - [ ] implement function that returns all files in notes directory together with their atime and mtime (accessed and modified).
 
+# controll flow for cache updates
+
 # Questions
 ## How should I handle schema migrations?
-The easiest way would probably be just throw away the old database, create a new one and then repopulate with the data.
-Since the main source of the data ought to be the documents rather than the database this should be safe to do.
+use the diesel migrations crate. It will handle updates to the schema automatically.

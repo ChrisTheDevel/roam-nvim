@@ -1,5 +1,5 @@
 [package]
-name = "rs-core"
+name = "roam-nvim"
 version = "0.1.0"
 edition = "2021"
 
@@ -11,5 +11,6 @@ dotenv = "0.15.0"
 # diesel crates
 diesel = { version = "1.4.4", features = ["sqlite"] }
 diesel_migrations = "1.4.0"
-# gives us the paths to several standardized paths
-dirs = "4.0.0"
+dirs = "4.0.0" # gives us the paths to several standardized paths
+mlua = { version = "0.7.4", features = ["luajit", "async", "macros", "module", "vendored"]}
+walkdir = "2.3.2"

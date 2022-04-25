@@ -6,13 +6,16 @@ use crate::database::DatabaseWrapper;
 pub struct BackendBuilder {
     database_wrapper: Option<DatabaseWrapper>,
     notes_dir: Option<PathBuf>,
+    notes_extension: Option<String>,
 }
 
 impl BackendBuilder {
+    /// Creates builder
     pub fn new() -> Self {
         BackendBuilder {
             database_wrapper: None,
             notes_dir: None,
+            notes_extension: Some("md".into()), // default extension
         }
     }
 
@@ -25,6 +28,13 @@ impl BackendBuilder {
         self.notes_dir = Some(notes_dir);
         self
     }
+
+    /// This method is optional since a default value is provided by `new`
+    pub fn notes_extension(mut self, notes_extension: String) -> Self {
+        self.notes_extension = Some(notes_extension);
+        self
+    }
+
 
     pub fn build(self) -> Result<Backend, BackendBuilderError> {
         if !(self.notes_dir.is_some() && self.database_wrapper.is_some()) {
@@ -42,6 +52,8 @@ impl BackendBuilder {
         Ok(Backend {
             database_wrapper: self.database_wrapper.unwrap(),
             notes_dir,
+            notes_extension: self.notes_extension.unwrap(),
+
         })
     }
 }
