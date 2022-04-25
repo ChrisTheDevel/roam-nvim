@@ -2,9 +2,12 @@
 use std::path::PathBuf;
 // external crate imports
 use diesel::prelude::*;
+use diesel_migrations::RunMigrationsError;
+embed_migrations!(); // here we inject a module 'embedded_migrations' which has all the migrations we want.
 // interal crate imports
 use super::DatabaseWrapper;
 
+#[derive(Clone)]
 /// A builder struct for DatabaseWrapper
 pub struct DatabaseWrapperBuilder {
     cache_path: Option<PathBuf>,
@@ -34,34 +37,33 @@ impl DatabaseWrapperBuilder {
     }
 
     /// Takes the provided paths, creates them if they do not exist. Is nonconsuming
-    pub fn build(&self) -> Result<DatabaseWrapper, DatabaseBuilderError> {
+    pub fn build(self) -> Result<DatabaseWrapper, DatabaseBuilderError> {
         // we can only create the wrapper when all fields have been initialized;
         if !(self.cache_path.is_some() && self.database_name.is_some()) {
             return Err(DatabaseBuilderError {
-                message: String::from(
-                    "All fields of builder has not been initialized. Cannot build wrapper",
-                ),
+                message: "All fields of builder has not been initialized. Cannot build wrapper".into(),
             });
         }
         // it is safe to take the cache_path
-        let cache_path = self.cache_path.clone().unwrap();
-        let database_name = self.database_name.clone().unwrap();
+        let cache_path = self.cache_path.unwrap();
+        let database_name = self.database_name.unwrap();
         // create the dirs if necessary. The establish function from diesel does not do this.
         if !cache_path.exists() {
             std::fs::create_dir_all(&cache_path).map_err(|_| DatabaseBuilderError {
-                message: String::from("Could not create the cache dirs!"),
+                message: "Could not create the cache dirs!".into(),
             })?;
         }
 
         let database_path = cache_path.join(database_name);
         let database_url = database_path.to_str().ok_or_else(|| DatabaseBuilderError {
-            message: String::from("Could not convert path to valid utf8"),
+            message: "Could not convert path to valid utf8".into(),
         })?;
 
         let connection: SqliteConnection =
             SqliteConnection::establish(database_url).map_err(|_| DatabaseBuilderError {
-                message: String::from("Could not establish connection to sqlite database"),
+                message: "Could not establish connection to sqlite database".into(),
             })?;
+        embedded_migrations::run(&connection);
         Ok(DatabaseWrapper { connection })
     }
 }
@@ -82,25 +84,20 @@ impl std::fmt::Display for DatabaseBuilderError {
 mod DatabaseBuilderTests {
     use super::*;
     use std::path::Path;
+    use crate::test_utils::remove_dirs;
 
-    /// function to delete old tb. Otherwise every test might run on an already existing db.
-    fn delete_db(path: &Path) {
-        std::fs::remove_dir_all(path).expect(&format!("could not remove {:?}", path));
-    }
 
     #[test]
     /// Test creating db on path that does not exist yet
     fn test_builder_without_existing_path() {
         let test_temp_dir = std::env::temp_dir().join("test_builder_without_existing_path");
-
         // create a builder struct and init is using methods
-        let builder = DatabaseWrapperBuilder::new();
-        let database_wrapper = builder
+        let database_wrapper = DatabaseWrapperBuilder::new()
             .cache_path(test_temp_dir.clone())
             .database_name("test_builder_without_existing_path.db".into())
             .build();
         assert!(database_wrapper.is_ok());
-        delete_db(&test_temp_dir);
+        remove_dirs(&test_temp_dir);
     }
 
     #[test]
@@ -118,13 +115,13 @@ mod DatabaseBuilderTests {
         let test_temp_dir = std::env::temp_dir().join("test_builder_with_existing_path");
         // we create the dirs ahead of time. This should work since we're only using std functions.
         assert!(std::fs::create_dir_all(test_temp_dir.clone()).is_ok());
-        // now we create the builder
         let builder = DatabaseWrapperBuilder::new()
             .cache_path(test_temp_dir.clone())
             .database_name("test_builder_with_existing_path.db".into());
         // and then we use it multiple times.
         {
-            let database_wrapper = builder.build();
+        // now we create the builder
+            let database_wrapper = builder.clone().build();
             // the builder should have successfully created a wrapper
             assert!(database_wrapper.is_ok());
         } // here we drop the wrapper and therefore the connection
@@ -134,6 +131,6 @@ mod DatabaseBuilderTests {
         // the builder should have successfully created a wrapper despite the previous
         // connection/creation of dirs
         assert!(database_wrapper.is_ok());
-        delete_db(&test_temp_dir);
+        remove_dirs(&test_temp_dir);
     }
 }
