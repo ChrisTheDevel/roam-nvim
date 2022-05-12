@@ -4,6 +4,6 @@ CREATE TABLE Links (
   source TEXT NOT NULL,
   destination TEXT NOT NULL,
   linktype TEXT NOT NULL,
-  FOREIGN KEY (source) REFERENCES files(filepath) ON DELETE CASCADE,
-  FOREIGN KEY (destination) REFERENCES files(filepath) ON DELETE CASCADE
+  FOREIGN KEY (source) REFERENCES Nodes(filepath) ON DELETE CASCADE,
+  FOREIGN KEY (destination) REFERENCES Nodes(filepath) ON DELETE CASCADE
 )
