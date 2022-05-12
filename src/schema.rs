@@ -1,19 +1,7 @@
-//! this module contains the schema definitions. These make compile time validations interactions
-//! with the sqlite database possible.
-
 table! {
     Aliases (alias) {
-        alias -> Text,
+        alias -> Nullable<Text>,
         filepath -> Text,
-    }
-}
-
-table! {
-    Files (filepath) {
-        filepath -> Text,
-        title -> Text,
-        atime -> Integer,
-        mtime -> Integer,
     }
 }
 
@@ -26,10 +14,19 @@ table! {
     }
 }
 
-joinable!(Aliases -> Files (filepath));
+table! {
+    Nodes (filepath) {
+        filepath -> Text,
+        title -> Text,
+        atime -> Integer,
+        mtime -> Integer,
+    }
+}
+
+joinable!(Aliases -> Nodes (filepath));
 
 allow_tables_to_appear_in_same_query!(
     Aliases,
-    Files,
     Links,
+    Nodes,
 );
