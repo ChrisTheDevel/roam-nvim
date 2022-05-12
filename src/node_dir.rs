@@ -93,7 +93,9 @@ impl NodesDirBuilder {
         let extension = self.node_extension.unwrap();
 
         // only creates the dirs if they do not exist
-        std::fs::create_dir_all(&dir_path).map_err(|_| BackendError::NodesDirBuilderError { message: "Could not create dir for nodes_dir".into() })?;
+        std::fs::create_dir_all(&dir_path).map_err(|_| BackendError::NodesDirBuilderError {
+            message: "Could not create dir for nodes_dir".into(),
+        })?;
 
         Ok(NodesDir {
             nodes_dir: dir_path,
@@ -114,15 +116,21 @@ mod nodes_dir_tests {
     fn create_default_nodes_dir() -> NodesDir {
         let builder = NodesDirBuilder::new();
         let temp_path = std::env::temp_dir().join("test_nodes_dir");
-        let nodes_dir = builder.dir_path(temp_path).extension("md".into()).build().unwrap();
+        let nodes_dir = builder
+            .dir_path(temp_path)
+            .extension("md".into())
+            .build()
+            .unwrap();
         nodes_dir
     }
 
+    #[test]
     fn test_hashing_multiple_times() {
         let file_name = "test_hashing_multiple_times";
         let (path, mut file, cleanup) = temp_file(file_name.into());
         let mut nodes_dir = create_default_nodes_dir();
-        file.write_all(b"writing to file").expect("Could not write to file inside test");
+        file.write_all(b"writing to file")
+            .expect("Could not write to file inside test");
         let h1 = nodes_dir.get_hash(&path).expect("could not get hash");
         let h2 = nodes_dir.get_hash(&path).expect("could not get hash");
         assert!(h1 == h2);
