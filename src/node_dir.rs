@@ -1,8 +1,11 @@
 use crate::error::BackendError;
-use std::{path::{PathBuf, Path}, ffi::OsStr, os::unix::prelude::MetadataExt};
-use walkdir::WalkDir;
 use blake2::{Blake2b512, Digest};
-
+use std::{
+    ffi::OsStr,
+    os::unix::prelude::MetadataExt,
+    path::{Path, PathBuf},
+};
+use walkdir::WalkDir;
 
 /// Struct which handles interaction with the markdown files which builds up the graph
 /// contains methods of interacting with the dir as a whole
@@ -18,36 +21,43 @@ pub struct NodesDir {
 impl NodesDir {
     /// Gets a list of tuples containing the markdown file names in nodes_dir and their corresponding mtime
     /// Is used to check if the database cache is up to date.
-    fn get_m_times(&self) -> Result<Vec<(PathBuf, i64)>, BackendError> {
-        Ok(WalkDir::new(&self.nodes_dir).into_iter().filter_entry(|entry| {
-            let path = entry.path();
-            path.is_dir() || path.extension().and_then(OsStr::to_str) == Some(&self.nodes_extension)
-        }).filter_map(|entry_result|{
-            match entry_result {
+    pub fn get_m_times(&self) -> Result<Vec<(PathBuf, i64)>, BackendError> {
+        Ok(WalkDir::new(&self.nodes_dir)
+            .into_iter()
+            .filter_entry(|entry| {
+                let path = entry.path();
+                path.is_dir()
+                    || path.extension().and_then(OsStr::to_str) == Some(&self.nodes_extension)
+            })
+            .filter_map(|entry_result| match entry_result {
                 Ok(entry) => {
                     let path = entry.clone().into_path();
-                    let mtime = path.metadata().expect("Could not retrieve metadata").mtime();
+                    let mtime = path
+                        .metadata()
+                        .expect("Could not retrieve metadata")
+                        .mtime();
                     Some((path, mtime))
-                },
+                }
                 Err(_) => None,
-            }
-        }).collect())
+            })
+            .collect())
     }
 
-    fn get_hash(&mut self, path: &Path) -> Result<String, BackendError> {
-        let mut file = std::fs::File::open(path).map_err(|_| {
-            BackendError::NodesDirError { message: "Could not open the file to compute its hash".into() }
+    pub fn get_hash(&mut self, path: &Path) -> Result<String, BackendError> {
+        let mut file = std::fs::File::open(path).map_err(|_| BackendError::NodesDirError {
+            message: "Could not open the file to compute its hash".into(),
         })?;
         // the hasher implements the writer trait so we can simply stream the file data into the
         // hasher
         let _n_bytes_streamed = std::io::copy(&mut file, &mut self.hasher).map_err(|_| {
-            BackendError::NodesDirError { message: "Could not hash file content".into() }
+            BackendError::NodesDirError {
+                message: "Could not hash file content".into(),
+            }
         })?;
         let hash = self.hasher.finalize_reset();
         let hash_string: String = base16ct::upper::encode_string(&hash);
         Ok(hash_string)
     }
-
 }
 
 pub struct NodesDirBuilder {
@@ -81,10 +91,44 @@ impl NodesDirBuilder {
         }
         let dir_path = self.nodes_dir.unwrap();
         let extension = self.node_extension.unwrap();
+
+        // only creates the dirs if they do not exist
+        std::fs::create_dir_all(&dir_path).map_err(|_| BackendError::NodesDirBuilderError { message: "Could not create dir for nodes_dir".into() })?;
+
         Ok(NodesDir {
             nodes_dir: dir_path,
             nodes_extension: extension,
             hasher: Blake2b512::new(), // the hasher is not something we provide to the user to configure
         })
+    }
+}
+
+#[cfg(test)]
+mod nodes_dir_tests {
+
+    use super::*;
+    use crate::test_utils::*;
+    use std::io::Write;
+
+    fn create_default_nodes_dir() -> NodesDir {
+        let builder = NodesDirBuilder::new();
+        let temp_path = std::env::temp_dir().join("test_nodes_dir");
+        let nodes_dir = builder.dir_path(temp_path).extension("md".into()).build().unwrap();
+        nodes_dir
+    }
+
+    #[test]
+    fn test_hashing_multiple_times() {
+        let file_name = "test_hashing_multiple_times";
+        let file_path: PathBuf = std::env::temp_dir().join(file_name);
+        let mut file = std::fs::File::create(&file_path).expect("could not create file for test!");
+        file.write_all(b"this file was created from the test_hashing_multiple_times function")
+            .expect("could not write to file");
+        let mut nodes_dir = create_default_nodes_dir();
+        let hash1 = nodes_dir.get_hash(&file_path);
+        assert!(hash1.is_ok());
+        let hash2 = nodes_dir.get_hash(&file_path);
+        assert!(hash2.is_ok());
+        assert!(hash1.unwrap() == hash2.unwrap());
     }
 }

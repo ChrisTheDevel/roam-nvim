@@ -1,3 +1,5 @@
+
+#[derive(Debug)]
 pub enum BackendError {
     /// Errors occuring when the plugin is initalized
     BackendInitError{message: String},
