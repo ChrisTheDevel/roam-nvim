@@ -16,3 +16,5 @@ diesel_migrations = "1.4.0"
 dirs = "4.0.0" # gives us the paths to several standardized paths
 mlua = { version = "0.7.4", features = ["luajit", "async", "macros", "module", "vendored"]}
 walkdir = "2.3.2"
+blake2 = "0.10.4"
+base16ct = {version = "0.1.1", features = ["alloc"]}
