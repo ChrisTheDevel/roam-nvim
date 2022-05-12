@@ -110,6 +110,7 @@ mod nodes_dir_tests {
     use crate::test_utils::*;
     use std::io::Write;
 
+    // creates a default nodes dir pointing at the tmp directory
     fn create_default_nodes_dir() -> NodesDir {
         let builder = NodesDirBuilder::new();
         let temp_path = std::env::temp_dir().join("test_nodes_dir");
@@ -117,18 +118,14 @@ mod nodes_dir_tests {
         nodes_dir
     }
 
-    #[test]
     fn test_hashing_multiple_times() {
         let file_name = "test_hashing_multiple_times";
-        let file_path: PathBuf = std::env::temp_dir().join(file_name);
-        let mut file = std::fs::File::create(&file_path).expect("could not create file for test!");
-        file.write_all(b"this file was created from the test_hashing_multiple_times function")
-            .expect("could not write to file");
+        let (path, mut file, cleanup) = temp_file(file_name.into());
         let mut nodes_dir = create_default_nodes_dir();
-        let hash1 = nodes_dir.get_hash(&file_path);
-        assert!(hash1.is_ok());
-        let hash2 = nodes_dir.get_hash(&file_path);
-        assert!(hash2.is_ok());
-        assert!(hash1.unwrap() == hash2.unwrap());
+        file.write_all(b"writing to file").expect("Could not write to file inside test");
+        let h1 = nodes_dir.get_hash(&path).expect("could not get hash");
+        let h2 = nodes_dir.get_hash(&path).expect("could not get hash");
+        assert!(h1 == h2);
+        assert!(cleanup().is_ok());
     }
 }
